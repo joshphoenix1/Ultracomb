@@ -1,0 +1,294 @@
+/* ============================================================
+   UltraComb SAL — Imperial Dark Theme
+   ============================================================ */
+
+:root {
+  --bg:        #0a0a0a;
+  --panel:     #111111;
+  --border:    #8b0000;
+  --accent:    #cc0000;
+  --bright:    #ff0000;
+  --text:      #cccccc;
+  --text-dim:  #666666;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+h1 {
+  color: var(--accent);
+  font-size: 28px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+}
+
+/* ---- Plugin frame ---- */
+.plugin {
+  display: flex;
+  gap: 6px;
+  padding: 16px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+}
+
+/* ---- Sections ---- */
+.section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.section h2 {
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.sec-dispersion { width: 180px; }
+.sec-engine     { width: 340px; }
+.sec-output     { width: 160px; }
+
+/* ---- Knobs ---- */
+.knob-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.knob {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #2a2a2a, #0a0a0a);
+  border: 2px solid var(--border);
+  position: relative;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.knob .indicator {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: var(--bright);
+  left: 50%;
+  top: 8px;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(0deg);
+  pointer-events: none;
+}
+
+.knob-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ---- XY Pad ---- */
+.xy-pad {
+  width: 300px;
+  height: 220px;
+  background: #060606;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  position: relative;
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.xy-pad .grid-line {
+  position: absolute;
+  background: rgba(255, 0, 0, 0.08);
+}
+.xy-pad .grid-line.v { width: 1px; height: 100%; top: 0; }
+.xy-pad .grid-line.h { height: 1px; width: 100%; left: 0; }
+
+.xy-pad .cursor {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--bright);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.xy-pad .crosshair-v,
+.xy-pad .crosshair-h {
+  position: absolute;
+  background: rgba(255, 0, 0, 0.2);
+  pointer-events: none;
+}
+.xy-pad .crosshair-v { width: 1px; height: 100%; top: 0; }
+.xy-pad .crosshair-h { height: 1px; width: 100%; left: 0; }
+
+.xy-label {
+  font-size: 8px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+/* ---- Toggle buttons ---- */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle .led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3a0000;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.toggle.active .led {
+  background: var(--bright);
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+}
+
+.toggle span {
+  font-size: 10px;
+  color: var(--text);
+  letter-spacing: 1px;
+}
+
+/* ---- Vertical slider (Dry/Wet) ---- */
+.vslider-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.vslider-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.vslider {
+  width: 16px;
+  height: 180px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  position: relative;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.vslider .fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--accent);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.vslider .thumb {
+  position: absolute;
+  left: -4px;
+  width: 24px;
+  height: 14px;
+  background: var(--bright);
+  border-radius: 4px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* ---- Level meters ---- */
+.meter {
+  width: 14px;
+  height: 100%;
+  background: #111;
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.meter .bar {
+  position: absolute;
+  bottom: 0;
+  left: 1px;
+  right: 1px;
+  background: linear-gradient(to top, #00cc00, #ffff00 55%, #ff6600 75%, #ff0000);
+  border-radius: 2px;
+  transition: height 0.05s;
+}
+
+/* ---- Controls panel ---- */
+.controls {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.controls button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.controls button:hover {
+  border-color: var(--bright);
+  color: #fff;
+}
+
+.controls button.active {
+  background: var(--border);
+  color: #fff;
+}
+
+/* ---- Param readout ---- */
+.readout {
+  margin-top: 12px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.6;
+}

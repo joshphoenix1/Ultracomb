@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UltraComb SAL</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>UltraComb SAL</h1>
+  <p class="subtitle">DISPERSER &bull; FREQ SHIFTER &bull; COMB ENGINE</p>
+
+  <!-- ======== Plugin frame ======== -->
+  <div class="plugin">
+
+    <!-- Level meter L -->
+    <div class="meter" id="meter-l">
+      <div class="bar" id="meter-l-bar"></div>
+    </div>
+
+    <!-- Section 1: Input & Dispersion -->
+    <div class="section sec-dispersion">
+      <h2>Input &amp; Dispersion</h2>
+
+      <div class="knob-group">
+        <div class="knob" id="knob-spread"><div class="indicator"></div></div>
+        <span class="knob-label">Spread</span>
+      </div>
+
+      <div class="knob-group">
+        <div class="knob" id="knob-poles"><div class="indicator"></div></div>
+        <span class="knob-label">Poles</span>
+      </div>
+
+      <div class="knob-group">
+        <div class="knob" id="knob-density"><div class="indicator"></div></div>
+        <span class="knob-label">Density</span>
+      </div>
+    </div>
+
+    <!-- Section 2: The Comb Engine -->
+    <div class="section sec-engine">
+      <h2>The Comb Engine</h2>
+
+      <div class="xy-pad" id="xy-pad">
+        <!-- Grid lines -->
+        <div class="grid-line v" style="left: 12.5%"></div>
+        <div class="grid-line v" style="left: 25%"></div>
+        <div class="grid-line v" style="left: 37.5%"></div>
+        <div class="grid-line v" style="left: 50%"></div>
+        <div class="grid-line v" style="left: 62.5%"></div>
+        <div class="grid-line v" style="left: 75%"></div>
+        <div class="grid-line v" style="left: 87.5%"></div>
+        <div class="grid-line h" style="top: 12.5%"></div>
+        <div class="grid-line h" style="top: 25%"></div>
+        <div class="grid-line h" style="top: 37.5%"></div>
+        <div class="grid-line h" style="top: 50%"></div>
+        <div class="grid-line h" style="top: 62.5%"></div>
+        <div class="grid-line h" style="top: 75%"></div>
+        <div class="grid-line h" style="top: 87.5%"></div>
+        <!-- Crosshair -->
+        <div class="crosshair-v"></div>
+        <div class="crosshair-h"></div>
+        <!-- Cursor -->
+        <div class="cursor"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; width: 100%;">
+        <span class="xy-label">FREQ SHIFT &larr;&rarr;</span>
+        <span class="xy-label">FEEDBACK &uarr;&darr;</span>
+      </div>
+
+      <div class="toggle" id="toggle-phase">
+        <div class="led"></div>
+        <span>PHASE INVERT</span>
+      </div>
+    </div>
+
+    <!-- Section 3: Master Output -->
+    <div class="section sec-output">
+      <h2>Master Output</h2>
+
+      <div class="vslider-wrap">
+        <span class="vslider-label">WET</span>
+        <div class="vslider" id="slider-drywet">
+          <div class="fill"></div>
+          <div class="thumb"></div>
+        </div>
+        <span class="vslider-label">DRY</span>
+      </div>
+
+      <div class="toggle" id="toggle-limiter">
+        <div class="led"></div>
+        <span>LIMITER</span>
+      </div>
+    </div>
+
+    <!-- Level meter R -->
+    <div class="meter" id="meter-r">
+      <div class="bar" id="meter-r-bar"></div>
+    </div>
+
+  </div><!-- .plugin -->
+
+  <!-- ======== Controls ======== -->
+  <div class="controls">
+    <button id="btn-demo">DEMO TONE</button>
+    <button id="btn-file">LOAD FILE</button>
+    <button id="btn-stop">STOP</button>
+  </div>
+
+  <!-- ======== Readout ======== -->
+  <div class="readout" id="readout"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
