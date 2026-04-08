@@ -96,11 +96,44 @@ jobs:
           xattr -cr "${{ steps.locate-au.outputs.au_path }}"
           xattr -cr "${{ steps.locate-vst3.outputs.vst3_path }}"
 
-      - name: Stage plugin bundles
+      - name: Stage plugin bundles with installer
         run: |
           mkdir -p staging-au staging-vst3
+
           cp -R "${{ steps.locate-au.outputs.au_path }}" "staging-au/UltraComb SAL.component"
           cp -R "${{ steps.locate-vst3.outputs.vst3_path }}" "staging-vst3/UltraComb SAL.vst3"
+
+          # Create double-click installer for AU
+          cat > staging-au/INSTALL.command << 'SCRIPT'
+          #!/bin/bash
+          cd "$(dirname "$0")"
+          echo "Installing UltraComb SAL AU..."
+          sudo cp -R "UltraComb SAL.component" "/Library/Audio/Plug-Ins/Components/"
+          sudo xattr -cr "/Library/Audio/Plug-Ins/Components/UltraComb SAL.component"
+          sudo codesign --force --deep -s - "/Library/Audio/Plug-Ins/Components/UltraComb SAL.component"
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          echo ""
+          echo "Done! Restart your DAW to use UltraComb SAL."
+          echo "Press any key to close..."
+          read -n1
+          SCRIPT
+          chmod +x staging-au/INSTALL.command
+
+          # Create double-click installer for VST3
+          cat > staging-vst3/INSTALL.command << 'SCRIPT'
+          #!/bin/bash
+          cd "$(dirname "$0")"
+          echo "Installing UltraComb SAL VST3..."
+          sudo mkdir -p "/Library/Audio/Plug-Ins/VST3"
+          sudo cp -R "UltraComb SAL.vst3" "/Library/Audio/Plug-Ins/VST3/"
+          sudo xattr -cr "/Library/Audio/Plug-Ins/VST3/UltraComb SAL.vst3"
+          sudo codesign --force --deep -s - "/Library/Audio/Plug-Ins/VST3/UltraComb SAL.vst3"
+          echo ""
+          echo "Done! Restart your DAW to use UltraComb SAL."
+          echo "Press any key to close..."
+          read -n1
+          SCRIPT
+          chmod +x staging-vst3/INSTALL.command
 
       - name: Upload AU artifact
         uses: actions/upload-artifact@v4
