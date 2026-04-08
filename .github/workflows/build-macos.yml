@@ -1,0 +1,35 @@
+name: Build macOS VST3 + AU
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: [web/**, '*.md']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G Xcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build AU
+        run: cmake --build build --config Release --target UltraCombSAL_AU
+
+      - name: Build VST3
+        run: cmake --build build --config Release --target UltraCombSAL_VST3
+
+      - name: Upload AU
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraComb-SAL-macOS-AU
+          path: build/UltraCombSAL_artefacts/Release/AU/*.component
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraComb-SAL-macOS-VST3
+          path: build/UltraCombSAL_artefacts/Release/VST3/*.vst3
