@@ -2,16 +2,18 @@ name: Build macOS AU & VST3
 
 on:
   push:
-    branches: [main]
-    paths-ignore: [web/**, '*.md']
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure CMake
         run: cmake -B build -G "Xcode" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
@@ -26,7 +28,7 @@ jobs:
         id: locate-au
         run: |
           au_path=$(find build -type d -name "*.component" | head -1)
-          if [ -z "$au_path" ]; then echo "AU not found" && exit 1; fi
+          if [ -z "$au_path" ]; then echo "AU .component not found" && exit 1; fi
           echo "au_path=$au_path" >> "$GITHUB_OUTPUT"
           echo "Found: $au_path"
 
@@ -89,21 +91,45 @@ jobs:
           path: pluginval-*.log
           if-no-files-found: warn
 
-      - name: Ad-hoc codesign and remove quarantine
+      - name: Ad-hoc codesign bundles
         run: |
           codesign --force --deep -s - "${{ steps.locate-au.outputs.au_path }}"
           codesign --force --deep -s - "${{ steps.locate-vst3.outputs.vst3_path }}"
-          xattr -cr "${{ steps.locate-au.outputs.au_path }}"
-          xattr -cr "${{ steps.locate-vst3.outputs.vst3_path }}"
 
-      - name: Stage plugin bundles with installer
+      - name: Stage plugin bundles
         run: |
           mkdir -p staging-au staging-vst3
-
           cp -R "${{ steps.locate-au.outputs.au_path }}" "staging-au/UltraComb SAL.component"
           cp -R "${{ steps.locate-vst3.outputs.vst3_path }}" "staging-vst3/UltraComb SAL.vst3"
 
-          # Create double-click installer for AU
+      - name: Create macOS installer (.pkg)
+        run: |
+          mkdir -p pkg-scripts
+          cat > pkg-scripts/postinstall << 'SCRIPT'
+          #!/bin/bash
+          xattr -cr "/Library/Audio/Plug-Ins/Components/UltraComb SAL.component" 2>/dev/null
+          codesign --force --deep -s - "/Library/Audio/Plug-Ins/Components/UltraComb SAL.component" 2>/dev/null
+          xattr -cr "/Library/Audio/Plug-Ins/VST3/UltraComb SAL.vst3" 2>/dev/null
+          codesign --force --deep -s - "/Library/Audio/Plug-Ins/VST3/UltraComb SAL.vst3" 2>/dev/null
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          exit 0
+          SCRIPT
+          chmod +x pkg-scripts/postinstall
+
+          mkdir -p pkg-root/Library/Audio/Plug-Ins/Components
+          mkdir -p pkg-root/Library/Audio/Plug-Ins/VST3
+          cp -R "${{ steps.locate-au.outputs.au_path }}" "pkg-root/Library/Audio/Plug-Ins/Components/UltraComb SAL.component"
+          cp -R "${{ steps.locate-vst3.outputs.vst3_path }}" "pkg-root/Library/Audio/Plug-Ins/VST3/UltraComb SAL.vst3"
+
+          pkgbuild \
+            --root pkg-root \
+            --scripts pkg-scripts \
+            --identifier com.homebrew.ultracombsal \
+            --version 1.0.0 \
+            "UltraComb-SAL-Installer.pkg"
+
+      - name: Create INSTALL.command
+        run: |
           cat > staging-au/INSTALL.command << 'SCRIPT'
           #!/bin/bash
           cd "$(dirname "$0")"
@@ -112,14 +138,11 @@ jobs:
           sudo xattr -cr "/Library/Audio/Plug-Ins/Components/UltraComb SAL.component"
           sudo codesign --force --deep -s - "/Library/Audio/Plug-Ins/Components/UltraComb SAL.component"
           killall -9 AudioComponentRegistrar 2>/dev/null || true
-          echo ""
-          echo "Done! Restart your DAW to use UltraComb SAL."
-          echo "Press any key to close..."
-          read -n1
+          echo "Done! Restart your DAW."
+          read -n1 -p "Press any key to close..."
           SCRIPT
           chmod +x staging-au/INSTALL.command
 
-          # Create double-click installer for VST3
           cat > staging-vst3/INSTALL.command << 'SCRIPT'
           #!/bin/bash
           cd "$(dirname "$0")"
@@ -128,12 +151,17 @@ jobs:
           sudo cp -R "UltraComb SAL.vst3" "/Library/Audio/Plug-Ins/VST3/"
           sudo xattr -cr "/Library/Audio/Plug-Ins/VST3/UltraComb SAL.vst3"
           sudo codesign --force --deep -s - "/Library/Audio/Plug-Ins/VST3/UltraComb SAL.vst3"
-          echo ""
-          echo "Done! Restart your DAW to use UltraComb SAL."
-          echo "Press any key to close..."
-          read -n1
+          echo "Done! Restart your DAW."
+          read -n1 -p "Press any key to close..."
           SCRIPT
           chmod +x staging-vst3/INSTALL.command
+
+      - name: Upload macOS Installer (.pkg)
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraComb-SAL-macOS-Installer
+          path: UltraComb-SAL-Installer.pkg
+          if-no-files-found: error
 
       - name: Upload AU artifact
         uses: actions/upload-artifact@v4

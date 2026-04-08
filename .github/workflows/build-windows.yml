@@ -2,16 +2,18 @@ name: Build Windows VST3
 
 on:
   push:
-    branches: [main]
-    paths-ignore: [web/**, '*.md']
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure CMake
         run: cmake -B build -G "Visual Studio 17 2022" -A x64
@@ -35,7 +37,7 @@ jobs:
           Invoke-WebRequest -Uri $url -OutFile pluginval.zip
           Expand-Archive pluginval.zip -DestinationPath pluginval -Force
 
-      - name: pluginval (strictness 5)
+      - name: pluginval (strictness 5, non-blocking, verbose)
         continue-on-error: true
         shell: pwsh
         run: |

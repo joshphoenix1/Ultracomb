@@ -18,7 +18,7 @@ private:
     void timerCallback() override;
     void drawMeter (juce::Graphics&, int x, int y, int w, int h, float level);
 
-    UltraCombProcessor& processor;
+    UltraCombProcessor& proc;
     ImperialLookAndFeel imperialLnf;
 
     // --- Section 1: Input & Dispersion ---

@@ -5,7 +5,7 @@ using namespace juce;
 //==============================================================================
 UltraCombEditor::UltraCombEditor (UltraCombProcessor& p)
     : AudioProcessorEditor (p),
-      processor (p),
+      proc (p),
       xyPad (p.apvts)
 {
     setLookAndFeel (&imperialLnf);
@@ -56,8 +56,8 @@ UltraCombEditor::~UltraCombEditor()
 //==============================================================================
 void UltraCombEditor::timerCallback()
 {
-    float newL = processor.peakLevelL.load (std::memory_order_relaxed);
-    float newR = processor.peakLevelR.load (std::memory_order_relaxed);
+    float newL = proc.peakLevelL.load (std::memory_order_relaxed);
+    float newR = proc.peakLevelR.load (std::memory_order_relaxed);
 
     // Peak hold with decay
     displayLevelL = jmax (newL, displayLevelL * 0.92f);
