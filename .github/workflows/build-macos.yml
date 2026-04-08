@@ -1,4 +1,4 @@
-name: Build macOS VST3 + AU
+name: Build macOS AU & VST3
 
 on:
   push:
@@ -13,23 +13,98 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure
-        run: cmake -B build -G Xcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+      - name: Configure CMake
+        run: cmake -B build -G "Xcode" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
 
-      - name: Build AU
-        run: cmake --build build --config Release --target UltraCombSAL_AU
+      - name: Build AU (Release)
+        run: cmake --build build --config Release --target UltraCombSAL_AU --parallel
 
-      - name: Build VST3
-        run: cmake --build build --config Release --target UltraCombSAL_VST3
+      - name: Build VST3 (Release)
+        run: cmake --build build --config Release --target UltraCombSAL_VST3 --parallel
 
-      - name: Upload AU
+      - name: Locate AU
+        id: locate-au
+        run: |
+          au_path=$(find build -type d -name "*.component" | head -1)
+          if [ -z "$au_path" ]; then echo "AU not found" && exit 1; fi
+          echo "au_path=$au_path" >> "$GITHUB_OUTPUT"
+          echo "Found: $au_path"
+
+      - name: Locate VST3
+        id: locate-vst3
+        run: |
+          vst3_path=$(find build -type d -name "*.vst3" | head -1)
+          if [ -z "$vst3_path" ]; then echo "VST3 not found" && exit 1; fi
+          echo "vst3_path=$vst3_path" >> "$GITHUB_OUTPUT"
+          echo "Found: $vst3_path"
+
+      - name: Validate AU with auval
+        continue-on-error: true
+        run: |
+          mkdir -p "$HOME/Library/Audio/Plug-Ins/Components"
+          cp -R "${{ steps.locate-au.outputs.au_path }}" "$HOME/Library/Audio/Plug-Ins/Components/"
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          sleep 2
+          auval -a 2>&1 | grep -i ultracomb || echo "AU not yet visible to auval"
+          auval -v aufx Ucsl Hmbr 2>&1 | tee auval.log
+
+      - name: Download pluginval
+        run: |
+          curl -L -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_macOS.zip
+          unzip pluginval.zip -d pluginval
+
+      - name: pluginval AU (strictness 5)
+        continue-on-error: true
+        run: |
+          ./pluginval/pluginval.app/Contents/MacOS/pluginval \
+            --strictness-level 5 \
+            --timeout-ms 300000 \
+            --verbose \
+            --validate "${{ steps.locate-au.outputs.au_path }}" 2>&1 \
+            | tee pluginval-au.log
+
+      - name: pluginval VST3 (strictness 5)
+        continue-on-error: true
+        run: |
+          ./pluginval/pluginval.app/Contents/MacOS/pluginval \
+            --strictness-level 5 \
+            --timeout-ms 300000 \
+            --verbose \
+            --validate "${{ steps.locate-vst3.outputs.vst3_path }}" 2>&1 \
+            | tee pluginval-vst3.log
+
+      - name: Upload auval log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auval-log
+          path: auval.log
+          if-no-files-found: warn
+
+      - name: Upload pluginval logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pluginval-macos-logs
+          path: pluginval-*.log
+          if-no-files-found: warn
+
+      - name: Stage plugin bundles
+        run: |
+          mkdir -p staging-au staging-vst3
+          cp -R "${{ steps.locate-au.outputs.au_path }}" "staging-au/UltraComb SAL.component"
+          cp -R "${{ steps.locate-vst3.outputs.vst3_path }}" "staging-vst3/UltraComb SAL.vst3"
+
+      - name: Upload AU artifact
         uses: actions/upload-artifact@v4
         with:
           name: UltraComb-SAL-macOS-AU
-          path: build/UltraCombSAL_artefacts/Release/AU/*.component
+          path: staging-au
+          if-no-files-found: error
 
-      - name: Upload VST3
+      - name: Upload VST3 artifact
         uses: actions/upload-artifact@v4
         with:
           name: UltraComb-SAL-macOS-VST3
-          path: build/UltraCombSAL_artefacts/Release/VST3/*.vst3
+          path: staging-vst3
+          if-no-files-found: error
