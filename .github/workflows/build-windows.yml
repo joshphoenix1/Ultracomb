@@ -13,25 +13,59 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure
+      - name: Configure CMake
         run: cmake -B build -G "Visual Studio 17 2022" -A x64
 
-      - name: Build
-        run: cmake --build build --config Release --target UltraCombSAL_VST3
+      - name: Build (Release)
+        run: cmake --build build --config Release --target UltraCombSAL_VST3 --parallel
 
-      - name: Find VST3
-        id: find
-        shell: bash
+      - name: Locate VST3
+        id: locate
+        shell: pwsh
         run: |
-          vst3dir=$(find build -type d -name "*.vst3" | head -1)
-          echo "vst3dir=$vst3dir" >> "$GITHUB_OUTPUT"
-          # Extract single binary for easy install
-          binary=$(find "$vst3dir" -name "*.vst3" -type f 2>/dev/null || find "$vst3dir" -name "*.dll" -type f | head -1)
-          mkdir -p artifact
-          cp "$binary" artifact/ 2>/dev/null || cp -r "$vst3dir" artifact/
+          $vst3 = Get-ChildItem -Path build -Recurse -Filter "UltraComb SAL.vst3" -Directory | Select-Object -First 1
+          if (-not $vst3) { throw "UltraComb SAL.vst3 not found" }
+          echo "vst3_path=$($vst3.FullName)" >> $env:GITHUB_OUTPUT
+          echo "Found: $($vst3.FullName)"
 
-      - name: Upload VST3
+      - name: Download pluginval
+        shell: pwsh
+        run: |
+          $url = "https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_Windows.zip"
+          Invoke-WebRequest -Uri $url -OutFile pluginval.zip
+          Expand-Archive pluginval.zip -DestinationPath pluginval -Force
+
+      - name: pluginval (strictness 5)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          ./pluginval/pluginval.exe `
+            --strictness-level 5 `
+            --timeout-ms 300000 `
+            --verbose `
+            --validate "${{ steps.locate.outputs.vst3_path }}" 2>&1 `
+            | Tee-Object -FilePath pluginval-s5.log
+          echo "--- exit: $LASTEXITCODE ---" | Tee-Object -FilePath pluginval-s5.log -Append
+
+      - name: Upload pluginval log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pluginval-log
+          path: pluginval-s5.log
+          if-no-files-found: warn
+
+      - name: Stage single-file VST3
+        shell: pwsh
+        run: |
+          $bin = Get-ChildItem -Path "${{ steps.locate.outputs.vst3_path }}" -Recurse -Filter "UltraComb SAL.vst3" -File | Select-Object -First 1
+          if (-not $bin) { throw "VST3 binary not found inside bundle" }
+          New-Item -ItemType Directory -Path staging -Force | Out-Null
+          Copy-Item $bin.FullName "staging/UltraComb SAL.vst3"
+
+      - name: Upload VST3 artifact
         uses: actions/upload-artifact@v4
         with:
           name: UltraComb-SAL-Windows-VST3
-          path: artifact/
+          path: "staging/UltraComb SAL.vst3"
+          if-no-files-found: error
