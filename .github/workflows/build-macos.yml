@@ -89,6 +89,13 @@ jobs:
           path: pluginval-*.log
           if-no-files-found: warn
 
+      - name: Ad-hoc codesign and remove quarantine
+        run: |
+          codesign --force --deep -s - "${{ steps.locate-au.outputs.au_path }}"
+          codesign --force --deep -s - "${{ steps.locate-vst3.outputs.vst3_path }}"
+          xattr -cr "${{ steps.locate-au.outputs.au_path }}"
+          xattr -cr "${{ steps.locate-vst3.outputs.vst3_path }}"
+
       - name: Stage plugin bundles
         run: |
           mkdir -p staging-au staging-vst3
